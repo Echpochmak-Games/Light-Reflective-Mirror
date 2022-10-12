@@ -37,22 +37,33 @@ namespace LightReflectiveMirror
         void WriteTitle()
         {
             string t = @"  
-                           w  c(..)o   (
-  _       _____   __  __    \__(-)    __)
- | |     |  __ \ |  \/  |       /\   (
- | |     | |__) || \  / |      /(_)___)
- | |     |  _  / | |\/| |      w /|
- | |____ | | \ \ | |  | |       | \
- |______||_|  \_\|_|  |_|      m  m copyright monkesoft 2021
-
+           ##             
+           ###            
+          ## ##           
+         ## # ##          
+         #  #  ##         Echpochmak Games
+        ##  #   #         
+        #   #   ##        
+       #   ##    ##       
+      ##    #     #       Relay for Mirror Networking version 67.1.0
+      #           ##      
+     ##     ##     ##     
+     #    #####     #     
+    ##   #  ## #    ##    
+    #     #   ##     #    
+    #      ###  #    ##   
+   ##   #        #    #   
+   #   #         ###  ##  
+   #  #            #   #  
+  ## #             ### ## 
+  ##                   ## 
+  ####################### 
 ";
 
-            string load = $"Chimp Event Listener Initializing... OK" +
-                            "\nHarambe Memorial Initializing...     OK" +
-                            "\nBananas Initializing...              OK\n";
+            string load = $"Chimp Event Listener Initializing... OK";
 
-            WriteLogMessage(t, ConsoleColor.Green);
-            WriteLogMessage(load, ConsoleColor.Cyan);
+            WriteLogMessage(t, ConsoleColor.Black);
+            WriteLogMessage(load, ConsoleColor.Green);
         }
     }
 }
