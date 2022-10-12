@@ -12,22 +12,95 @@ namespace kcp2k
         //            => we need the MTU to fit channel + message!
         readonly byte[] rawReceiveBuffer = new byte[Kcp.MTU_DEF];
 
-        public void Connect(string host, ushort port, bool noDelay, uint interval = Kcp.INTERVAL, int fastResend = 0, bool congestionWindow = true, uint sendWindowSize = Kcp.WND_SND, uint receiveWindowSize = Kcp.WND_RCV)
+        // helper function to resolve host to IPAddress
+        public static bool ResolveHostname(string hostname, out IPAddress[] addresses)
+        {
+            try
+            {
+                // NOTE: dns lookup is blocking. this can take a second.
+                addresses = Dns.GetHostAddresses(hostname);
+                return addresses.Length >= 1;
+            }
+            catch (SocketException exception)
+            {
+                Log.Info($"Failed to resolve host: {hostname} reason: {exception}");
+                addresses = null;
+                return false;
+            }
+        }
+
+        // EndPoint & Receive functions can be overwritten for where-allocation:
+        // https://github.com/vis2k/where-allocation
+        // NOTE: Client's SendTo doesn't allocate, don't need a virtual.
+        protected virtual void CreateRemoteEndPoint(IPAddress[] addresses, ushort port) =>
+            remoteEndPoint = new IPEndPoint(addresses[0], port);
+
+        protected virtual int ReceiveFrom(byte[] buffer) =>
+            socket.ReceiveFrom(buffer, ref remoteEndPoint);
+
+        // if connections drop under heavy load, increase to OS limit.
+        // if still not enough, increase the OS limit.
+        void ConfigureSocketBufferSizes(bool maximizeSendReceiveBuffersToOSLimit)
+        {
+            if (maximizeSendReceiveBuffersToOSLimit)
+            {
+                // log initial size for comparison.
+                // remember initial size for log comparison
+                int initialReceive = socket.ReceiveBufferSize;
+                int initialSend = socket.SendBufferSize;
+
+                socket.SetReceiveBufferToOSLimit();
+                socket.SetSendBufferToOSLimit();
+                Log.Info($"KcpClient: RecvBuf = {initialReceive}=>{socket.ReceiveBufferSize} ({socket.ReceiveBufferSize/initialReceive}x) SendBuf = {initialSend}=>{socket.SendBufferSize} ({socket.SendBufferSize/initialSend}x) increased to OS limits!");
+            }
+            // otherwise still log the defaults for info.
+            else Log.Info($"KcpClient: RecvBuf = {socket.ReceiveBufferSize} SendBuf = {socket.SendBufferSize}. If connections drop under heavy load, enable {nameof(maximizeSendReceiveBuffersToOSLimit)} to increase it to OS limit. If they still drop, increase the OS limit.");
+        }
+
+        public void Connect(string host,
+                            ushort port,
+                            bool noDelay,
+                            uint interval = Kcp.INTERVAL,
+                            int fastResend = 0,
+                            bool congestionWindow = true,
+                            uint sendWindowSize = Kcp.WND_SND,
+                            uint receiveWindowSize = Kcp.WND_RCV,
+                            int timeout = DEFAULT_TIMEOUT,
+                            uint maxRetransmits = Kcp.DEADLINK,
+                            bool maximizeSendReceiveBuffersToOSLimit = false)
         {
             Log.Info($"KcpClient: connect to {host}:{port}");
-            IPAddress[] ipAddress = Dns.GetHostAddresses(host);
-            if (ipAddress.Length < 1)
-                throw new SocketException((int)SocketError.HostNotFound);
 
-            remoteEndpoint = new IPEndPoint(ipAddress[0], port);
-            socket = new Socket(remoteEndpoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
-            socket.Connect(remoteEndpoint);
-            SetupKcp(noDelay, interval, fastResend, congestionWindow, sendWindowSize, receiveWindowSize);
+            // try resolve host name
+            if (ResolveHostname(host, out IPAddress[] addresses))
+            {
+                // create remote endpoint
+                CreateRemoteEndPoint(addresses, port);
 
-            // client should send handshake to server as very first message
-            SendHandshake();
+                // create socket
+                socket = new Socket(remoteEndPoint.AddressFamily, SocketType.Dgram, ProtocolType.Udp);
 
-            RawReceive();
+                // configure buffer sizes
+                ConfigureSocketBufferSizes(maximizeSendReceiveBuffersToOSLimit);
+
+                // connect
+                socket.Connect(remoteEndPoint);
+
+                // set up kcp
+                SetupKcp(noDelay, interval, fastResend, congestionWindow, sendWindowSize, receiveWindowSize, timeout, maxRetransmits);
+
+                // client should send handshake to server as very first message
+                SendHandshake();
+
+                RawReceive();
+            }
+            // otherwise call OnDisconnected to let the user know.
+            else
+            {
+                // pass error to user callback. no need to log it manually.
+                OnError(ErrorCode.DnsResolve, $"Failed to resolve host: {host}");
+                OnDisconnected();
+            }
         }
 
         // call from transport update
@@ -39,7 +112,7 @@ namespace kcp2k
                 {
                     while (socket.Poll(0, SelectMode.SelectRead))
                     {
-                        int msgLength = socket.ReceiveFrom(rawReceiveBuffer, ref remoteEndpoint);
+                        int msgLength = ReceiveFrom(rawReceiveBuffer);
                         // IMPORTANT: detect if buffer was too small for the
                         //            received msgLength. otherwise the excess
                         //            data would be silently lost.
@@ -51,14 +124,22 @@ namespace kcp2k
                         }
                         else
                         {
-                            Log.Error($"KCP ClientConnection: message of size {msgLength} does not fit into buffer of size {rawReceiveBuffer.Length}. The excess was silently dropped. Disconnecting.");
+                            // pass error to user callback. no need to log it manually.
+                            OnError(ErrorCode.InvalidReceive, $"KCP ClientConnection: message of size {msgLength} does not fit into buffer of size {rawReceiveBuffer.Length}. The excess was silently dropped. Disconnecting.");
                             Disconnect();
                         }
                     }
                 }
             }
             // this is fine, the socket might have been closed in the other end
-            catch (SocketException) {}
+            catch (SocketException ex)
+            {
+                // the other end closing the connection is not an 'error'.
+                // but connections should never just end silently.
+                // at least log a message for easier debugging.
+                Log.Info($"KCP ClientConnection: looks like the other end has closed the connection. This is fine: {ex}");
+                Disconnect();
+            }
         }
 
         protected override void Dispose()

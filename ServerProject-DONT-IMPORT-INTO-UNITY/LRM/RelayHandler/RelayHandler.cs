@@ -98,7 +98,7 @@ namespace LightReflectiveMirror
             sendBuffer.WriteByte(ref pos, (byte)OpCodes.GetData);
             sendBuffer.WriteBytes(ref pos, clientData);
 
-            Program.transport.ServerSend(sendTo, channel, new ArraySegment<byte>(sendBuffer, 0, pos));
+            Program.transport.ServerSend(sendTo, new ArraySegment<byte>(sendBuffer, 0, pos), channel);
             _sendBuffers.Return(sendBuffer);
         }
 
@@ -119,7 +119,7 @@ namespace LightReflectiveMirror
             sendBuffer.WriteBytes(ref pos, clientData);
             sendBuffer.WriteInt(ref pos, senderId);
 
-            Program.transport.ServerSend(room.hostId, channel, new ArraySegment<byte>(sendBuffer, 0, pos));
+            Program.transport.ServerSend(room.hostId, new ArraySegment<byte>(sendBuffer, 0, pos), channel);
             _sendBuffers.Return(sendBuffer);
         }
 
@@ -135,7 +135,7 @@ namespace LightReflectiveMirror
             sendBuffer.WriteByte(ref pos, (byte)OpCodes.GetID);
             sendBuffer.WriteInt(ref pos, clientId);
 
-            Program.transport.ServerSend(clientId, 0, new ArraySegment<byte>(sendBuffer, 0, pos));
+            Program.transport.ServerSend(clientId, new ArraySegment<byte>(sendBuffer, 0, pos), 0);
             _sendBuffers.Return(sendBuffer);
         }
     }

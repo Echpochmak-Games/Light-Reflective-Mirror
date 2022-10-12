@@ -50,7 +50,7 @@ namespace LightReflectiveMirror
                     _NATRequest.WriteByte(ref _NATRequestPosition, (byte)OpCodes.RequestNATConnection);
                     _NATRequest.WriteString(ref _NATRequestPosition, natID);
                     _NATRequest.WriteInt(ref _NATRequestPosition, conf.NATPunchtroughPort);
-                    transport.ServerSend(clientID, 0, new ArraySegment<byte>(_NATRequest, 0, _NATRequestPosition));
+                    transport.ServerSend(clientID, new ArraySegment<byte>(_NATRequest, 0, _NATRequestPosition), 0);
                 }
             };
 
@@ -69,7 +69,8 @@ namespace LightReflectiveMirror
                     _pendingNATPunches.Remove(clientID);
             };
 
-            transport.ServerStart(conf.TransportPort);
+            transport.Port = conf.TransportPort;
+            transport.ServerStart();
 
             WriteLogMessage("OK", ConsoleColor.Green);
         }

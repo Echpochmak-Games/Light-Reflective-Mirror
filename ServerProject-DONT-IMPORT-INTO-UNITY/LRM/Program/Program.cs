@@ -100,7 +100,23 @@ namespace LightReflectiveMirror
                     await RegisterSelfToLoadBalancer();
             }
 
+            WriteLogMessage("Server started on " + transport.ServerUri());
+            WriteLogMessage("Endpoint started on " + GetLocalIp() + ":" + conf.EndpointPort);
             await HeartbeatLoop();
+        }
+        
+        private static string GetLocalIp()
+        {
+            var host = Dns.GetHostEntry(Dns.GetHostName());
+            foreach (var ip in host.AddressList)
+            {
+                if (ip.AddressFamily == AddressFamily.InterNetwork)
+                {
+                    return ip.ToString();
+                }
+            }
+
+            return null;
         }
 
         private async Task HeartbeatLoop()
@@ -127,7 +143,7 @@ namespace LightReflectiveMirror
                     _currentHeartbeatTimer = 0;
 
                     for (int i = 0; i < _currentConnections.Count; i++)
-                        transport.ServerSend(_currentConnections[i], 0, new ArraySegment<byte>(heartbeat));
+                        transport.ServerSend(_currentConnections[i], new ArraySegment<byte>(heartbeat), 0);
 
                     if (conf.UseLoadBalancer)
                     {
