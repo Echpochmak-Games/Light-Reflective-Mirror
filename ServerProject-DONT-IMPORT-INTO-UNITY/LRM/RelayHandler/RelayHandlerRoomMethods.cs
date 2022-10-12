@@ -51,7 +51,7 @@ namespace LightReflectiveMirror
             sendBuffer.WriteByte(ref pos, (byte)OpCodes.RoomCreated);
             sendBuffer.WriteString(ref pos, room.serverId);
 
-            Program.transport.ServerSend(clientId, 0, new ArraySegment<byte>(sendBuffer, 0, pos));
+            Program.transport.ServerSend(clientId, new ArraySegment<byte>(sendBuffer, 0, pos), 0);
             _sendBuffers.Return(sendBuffer);
 
             Endpoint.RoomsModified();
@@ -92,7 +92,7 @@ namespace LightReflectiveMirror
                         sendJoinBuffer.WriteInt(ref sendJoinPos, room.useNATPunch ? room.hostIP.Port : room.port);
                         sendJoinBuffer.WriteBool(ref sendJoinPos, room.useNATPunch);
 
-                        Program.transport.ServerSend(clientId, 0, new ArraySegment<byte>(sendJoinBuffer, 0, sendJoinPos));
+                        Program.transport.ServerSend(clientId, new ArraySegment<byte>(sendJoinBuffer, 0, sendJoinPos), 0);
 
                         if (room.useNATPunch)
                         {
@@ -103,7 +103,7 @@ namespace LightReflectiveMirror
                             sendJoinBuffer.WriteInt(ref sendJoinPos, Program.instance.NATConnections[clientId].Port);
                             sendJoinBuffer.WriteBool(ref sendJoinPos, true);
 
-                            Program.transport.ServerSend(room.hostId, 0, new ArraySegment<byte>(sendJoinBuffer, 0, sendJoinPos));
+                            Program.transport.ServerSend(room.hostId, new ArraySegment<byte>(sendJoinBuffer, 0, sendJoinPos), 0);
                         }
 
                         _sendBuffers.Return(sendJoinBuffer);
@@ -116,8 +116,8 @@ namespace LightReflectiveMirror
                         sendJoinBuffer.WriteByte(ref sendJoinPos, (byte)OpCodes.ServerJoined);
                         sendJoinBuffer.WriteInt(ref sendJoinPos, clientId);
 
-                        Program.transport.ServerSend(clientId, 0, new ArraySegment<byte>(sendJoinBuffer, 0, sendJoinPos));
-                        Program.transport.ServerSend(room.hostId, 0, new ArraySegment<byte>(sendJoinBuffer, 0, sendJoinPos));
+                        Program.transport.ServerSend(clientId, new ArraySegment<byte>(sendJoinBuffer, 0, sendJoinPos), 0);
+                        Program.transport.ServerSend(room.hostId, new ArraySegment<byte>(sendJoinBuffer, 0, sendJoinPos), 0);
                         _sendBuffers.Return(sendJoinBuffer);
 
                         Endpoint.RoomsModified();
@@ -132,7 +132,7 @@ namespace LightReflectiveMirror
 
             sendBuffer.WriteByte(ref pos, (byte)OpCodes.ServerLeft);
 
-            Program.transport.ServerSend(clientId, 0, new ArraySegment<byte>(sendBuffer, 0, pos));
+            Program.transport.ServerSend(clientId, new ArraySegment<byte>(sendBuffer, 0, pos), 0);
             _sendBuffers.Return(sendBuffer);
         }
 
@@ -154,7 +154,7 @@ namespace LightReflectiveMirror
 
                     for (int x = 0; x < rooms[i].clients.Count; x++)
                     {
-                        Program.transport.ServerSend(rooms[i].clients[x], 0, new ArraySegment<byte>(sendBuffer, 0, pos));
+                        Program.transport.ServerSend(rooms[i].clients[x], new ArraySegment<byte>(sendBuffer, 0, pos), 0);
                         _cachedClientRooms.Remove(rooms[i].clients[x]);
                     }
 
@@ -180,7 +180,7 @@ namespace LightReflectiveMirror
                         sendBuffer.WriteByte(ref pos, (byte)OpCodes.PlayerDisconnected);
                         sendBuffer.WriteInt(ref pos, clientId);
 
-                        Program.transport.ServerSend(rooms[i].hostId, 0, new ArraySegment<byte>(sendBuffer, 0, pos));
+                        Program.transport.ServerSend(rooms[i].hostId, new ArraySegment<byte>(sendBuffer, 0, pos), 0);
                         _sendBuffers.Return(sendBuffer);
 
                         // temporary solution to kicking bug
@@ -190,7 +190,7 @@ namespace LightReflectiveMirror
 
                         sendBuffer.WriteByte(ref pos, (byte)OpCodes.ServerLeft);
 
-                        Program.transport.ServerSend(clientId, 0, new ArraySegment<byte>(sendBuffer, 0, pos));
+                        Program.transport.ServerSend(clientId, new ArraySegment<byte>(sendBuffer, 0, pos), 0);
                         _sendBuffers.Return(sendBuffer);
 
                         //end temporary solution
