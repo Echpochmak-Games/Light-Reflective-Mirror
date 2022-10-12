@@ -46,7 +46,7 @@ namespace LightReflectiveMirror
             _cachedRooms.Add(room.serverId, room);
 
             int pos = 0;
-            byte[] sendBuffer = _sendBuffers.Rent(5);
+            byte[] sendBuffer = _sendBuffers.Rent(40);
 
             sendBuffer.WriteByte(ref pos, (byte)OpCodes.RoomCreated);
             sendBuffer.WriteString(ref pos, room.serverId);

@@ -62,7 +62,7 @@ namespace LightReflectiveMirror
 
             string load = $"Chimp Event Listener Initializing... OK";
 
-            WriteLogMessage(t, ConsoleColor.Black);
+            WriteLogMessage(t, ConsoleColor.White);
             WriteLogMessage(load, ConsoleColor.Green);
         }
     }

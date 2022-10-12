@@ -87,21 +87,32 @@ namespace LightReflectiveMirror
 
         public static void WriteChar(this byte[] data, ref int position, char value)
         {
+            int size = 2;
+            
             unsafe
             {
                 fixed (byte* dataPtr = &data[position])
                 {
                     char* valuePtr = (char*)dataPtr;
                     *valuePtr = value;
-                    position += 2;
+                    position += size;
                 }
+            }
+        }
+        
+        static void EnsureCapacity(ref byte[] buffer, int value)
+        {
+            if (buffer.Length < value)
+            {
+                int capacity = Math.Max(value, buffer.Length * 2);
+                Array.Resize(ref buffer, capacity);
             }
         }
 
         public static char ReadChar(this byte[] data, ref int position)
         {
             char value = BitConverter.ToChar(data, position);
-            position += 2;
+            position += sizeof(char);
             return value;
         }
 
