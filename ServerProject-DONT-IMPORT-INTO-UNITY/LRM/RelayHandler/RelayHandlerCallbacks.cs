@@ -107,11 +107,12 @@ namespace LightReflectiveMirror
                         break;
                 }
             }
-            catch
+            catch(Exception ex)
             {
                 // sent invalid data, boot them hehe
                 Program.WriteLogMessage($"Client {clientId} sent bad data! Removing from LRM node.");
                 Program.transport.ServerDisconnect(clientId);
+                Program.WriteLogMessage(ex.ToString(), ConsoleColor.DarkRed);
             }
         }
 
