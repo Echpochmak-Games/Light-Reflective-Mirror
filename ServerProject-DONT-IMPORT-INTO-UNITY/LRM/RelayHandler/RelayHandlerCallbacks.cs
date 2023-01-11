@@ -17,6 +17,13 @@ namespace LightReflectiveMirror
             buffer.WriteByte(ref pos, (byte)OpCodes.AuthenticationRequest);
             Program.transport.ServerSend(clientId, new ArraySegment<byte>(buffer, 0, pos), 0);
             _sendBuffers.Return(buffer);
+            
+            buffer = _sendBuffers.Rent(1);
+            pos = 0;
+            buffer.WriteByte(ref pos, (byte)OpCodes.ServerConnectionData);
+            buffer.WriteInt(ref pos, clientId);
+            Program.transport.ServerSend(clientId, new ArraySegment<byte>(buffer, 0, pos), 0);
+            _sendBuffers.Return(buffer);
         }
 
         /// <summary>
