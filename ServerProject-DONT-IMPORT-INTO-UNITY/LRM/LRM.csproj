@@ -26,4 +26,8 @@
     <Folder Include="Properties\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Compile Remove="Program\ProgramExtra.cs" />
+  </ItemGroup>
+
 </Project>
