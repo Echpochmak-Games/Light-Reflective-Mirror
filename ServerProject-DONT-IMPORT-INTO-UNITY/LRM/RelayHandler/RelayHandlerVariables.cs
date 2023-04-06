@@ -11,6 +11,7 @@ namespace LightReflectiveMirror
         private int _maxPacketSize = 0;
         private Dictionary<int, Room> _cachedClientRooms = new();
         private Dictionary<string, Room> _cachedRooms = new();
+        private RelayObserver _observer =new();
 
         private System.Random _cachedRandom = new();
     }

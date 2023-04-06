@@ -127,6 +127,11 @@ namespace LightReflectiveMirror
         /// Invoked when a client disconnects from the relay.
         /// </summary>
         /// <param name="clientId">The ID of the client who disconnected</param>
-        public void HandleDisconnect(int clientId) => LeaveRoom(clientId);
+        public void HandleDisconnect(int clientId)
+        {
+            LeaveRoom(clientId);
+            _observer.Clear(clientId);
+        }
+
     }
 }

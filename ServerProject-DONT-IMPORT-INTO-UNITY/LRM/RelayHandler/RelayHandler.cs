@@ -10,6 +10,7 @@ namespace LightReflectiveMirror
         public RelayHandler(int maxPacketSize)
         {
             _maxPacketSize = maxPacketSize;
+            _observer.Authentication();
             _sendBuffers = ArrayPool<byte>.Create(maxPacketSize, 50);
         }
 
