@@ -9,6 +9,10 @@ namespace LightReflectiveMirror
         private const string BearerFileName = "bearer.json";
         private const string LoginFileName = "login.json";
 
+        private API api;
+        private Login login;
+        private Bearer bearer;
+        
         private HttpClient httpClient = new HttpClient();
 
         public RelayObserver()
@@ -18,19 +22,19 @@ namespace LightReflectiveMirror
 
         public async Task Authentication()
         {
-            var api = await FileWorker.ReadFile<API>(SettingsFileName);
-            var login = await FileWorker.ReadFile<Login>(LoginFileName);
+            api ??= await FileWorker.ReadFile<API>(SettingsFileName);
+            login ??= await FileWorker.ReadFile<Login>(LoginFileName);
 
             using HttpRequestMessage request = new HttpRequestMessage(
                 HttpMethod.Post, 
-                api.AddressStr + string.Format(api.AuthStr, login.Email, login.Password));
+                api.AuthenticationAddress + string.Format(api.Authentication, login.Email, login.Password));
             using HttpResponseMessage response = await httpClient.SendAsync(request);
 
             foreach (var header in response.Headers)
             {
                 foreach (var headerValue in header.Value)
                 {
-                    if (header.Key == "Authorization")
+                    if (string.Equals(header.Key , "Authorization"))
                         FileWorker.WriteInFile(new Bearer(header.Key, headerValue), BearerFileName);
                 }
             }
@@ -38,12 +42,12 @@ namespace LightReflectiveMirror
         
         public async Task Clear(int accessToken)
         {
-            var api = await FileWorker.ReadFile<API>(SettingsFileName);
-            var bearer = await FileWorker.ReadFile<Bearer>(BearerFileName);
+            api ??= await FileWorker.ReadFile<API>(SettingsFileName);
+            bearer ??= await FileWorker.ReadFile<Bearer>(BearerFileName);
 
             using HttpRequestMessage request = new HttpRequestMessage(
                 HttpMethod.Post,
-                api.AddressStr + string.Format(api.ClearStr, accessToken));
+                api.AuthenticationAddress + string.Format(api.Clear, accessToken));
             
             httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
             httpClient.DefaultRequestHeaders.Add(bearer.Name, "Bearer " + bearer.Token);

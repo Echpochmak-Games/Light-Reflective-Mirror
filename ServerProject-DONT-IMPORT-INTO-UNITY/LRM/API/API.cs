@@ -1,7 +1,7 @@
 ﻿
-public struct API
+public class API
 {
-    public string AddressStr { get; set; }
-    public string AuthStr { get; set; }
-    public string ClearStr { get; set; }
+    public string AuthenticationAddress { get; set; }
+    public string Authentication { get; set; }
+    public string Clear { get; set; }
 }

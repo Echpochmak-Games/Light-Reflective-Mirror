@@ -1,5 +1,5 @@
 ﻿
-internal struct Bearer
+internal class Bearer
 {
     public string Name { get; set; }
     public string Token { get; set; }
