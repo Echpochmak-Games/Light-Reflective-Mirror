@@ -10,12 +10,12 @@ namespace LightReflectiveMirror
         private static string _loginDirectoryName;
         private static JsonSerializerOptions _options = new JsonSerializerOptions { WriteIndented = true };
 
-        private static string LocalPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory) + _loginDirectoryName;
+        private static string GetPath(string fileName) => Path.Combine(AppDomain.CurrentDomain.BaseDirectory, _loginDirectoryName, fileName);
 
         public static void Init(string loginDirectoryName)
         {
             _loginDirectoryName = loginDirectoryName;
-            DirectoryInfo dirInfo = new DirectoryInfo(LocalPath);
+            DirectoryInfo dirInfo = new DirectoryInfo(GetPath(""));
             
             if (!dirInfo.Exists)
                 dirInfo.Create();
@@ -23,13 +23,13 @@ namespace LightReflectiveMirror
 
         public static void InitFile<T>(T obj, string fileName)
         {
-           if (!File.Exists(LocalPath + fileName))
+           if (!File.Exists(GetPath(fileName)))
                WriteInFile(obj, fileName);
         }
 
         public static async void WriteInFile<T>(T obj, string fileName)
         {
-            await using (FileStream fs = new FileStream(LocalPath + fileName, FileMode.OpenOrCreate))
+            await using (FileStream fs = new FileStream(GetPath(fileName), FileMode.OpenOrCreate))
             {
                 await JsonSerializer.SerializeAsync<T>(fs, obj, _options);
             }
@@ -37,7 +37,7 @@ namespace LightReflectiveMirror
 
         public static async Task<T> ReadFile<T>(string fileName)
         {
-            await using (FileStream fs = new FileStream(LocalPath + fileName, FileMode.OpenOrCreate))
+            await using (FileStream fs = new FileStream(GetPath(fileName), FileMode.OpenOrCreate))
             {
                 return await JsonSerializer.DeserializeAsync<T>(fs);
             }

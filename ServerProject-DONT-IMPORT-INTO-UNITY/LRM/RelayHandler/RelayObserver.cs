@@ -5,7 +5,7 @@ namespace LightReflectiveMirror
 {
     public class RelayObserver
     {
-        private const string LOGIN_DIRECTORY_NAME = "API\\";
+        private const string LOGIN_DIRECTORY_NAME = "API";
 
         private const string SETTINGS_FILE_NAME = "settings.json";
         private const string BEARER_FILE_NAME = "bearer.json";
