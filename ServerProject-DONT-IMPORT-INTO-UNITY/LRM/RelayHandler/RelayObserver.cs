@@ -5,29 +5,34 @@ namespace LightReflectiveMirror
 {
     public class RelayObserver
     {
-        private const string SettingsFileName = "settings.json";
-        private const string BearerFileName = "bearer.json";
-        private const string LoginFileName = "login.json";
+        private const string LOGIN_DIRECTORY_NAME = "API\\";
 
-        private API api;
-        private Login login;
-        private Bearer bearer;
+        private const string SETTINGS_FILE_NAME = "settings.json";
+        private const string BEARER_FILE_NAME = "bearer.json";
+        private const string LOGIN_FILE_NAME = "login.json";
+
+        private API _api;
+        private Login _login;
+        private Bearer _bearer;
         
         private HttpClient httpClient = new HttpClient();
 
         public RelayObserver()
         {
-            FileWorker.Init();
+            FileWorker.Init(LOGIN_DIRECTORY_NAME);
+            FileWorker.InitFile<API>(new API(), SETTINGS_FILE_NAME);
+            FileWorker.InitFile<Login>(new Login(null, null), LOGIN_FILE_NAME);
+            FileWorker.InitFile<Bearer>(new Bearer(null, null), BEARER_FILE_NAME);
         }
 
         public async Task Authentication()
         {
-            api ??= await FileWorker.ReadFile<API>(SettingsFileName);
-            login ??= await FileWorker.ReadFile<Login>(LoginFileName);
+            _api ??= await FileWorker.ReadFile<API>(SETTINGS_FILE_NAME);
+            _login ??= await FileWorker.ReadFile<Login>(LOGIN_FILE_NAME);
 
             using HttpRequestMessage request = new HttpRequestMessage(
                 HttpMethod.Post, 
-                api.AuthenticationAddress + string.Format(api.Authentication, login.Email, login.Password));
+                _api.Domain + string.Format(_api.AuthProviderPath, _login.Email, _login.Password));
             using HttpResponseMessage response = await httpClient.SendAsync(request);
 
             foreach (var header in response.Headers)
@@ -35,22 +40,22 @@ namespace LightReflectiveMirror
                 foreach (var headerValue in header.Value)
                 {
                     if (string.Equals(header.Key , "Authorization"))
-                        FileWorker.WriteInFile(new Bearer(header.Key, headerValue), BearerFileName);
+                        FileWorker.WriteInFile(new Bearer(header.Key, headerValue), BEARER_FILE_NAME);
                 }
             }
         }
         
         public async Task Clear(int accessToken)
         {
-            api ??= await FileWorker.ReadFile<API>(SettingsFileName);
-            bearer ??= await FileWorker.ReadFile<Bearer>(BearerFileName);
+            _api ??= await FileWorker.ReadFile<API>(SETTINGS_FILE_NAME);
+            _bearer ??= await FileWorker.ReadFile<Bearer>(BEARER_FILE_NAME);
 
             using HttpRequestMessage request = new HttpRequestMessage(
                 HttpMethod.Post,
-                api.AuthenticationAddress + string.Format(api.Clear, accessToken));
+                _api.Domain + string.Format(_api.ClearAccessTokenProviderPath, accessToken));
             
             httpClient.DefaultRequestHeaders.Add("Accept", "application/json");
-            httpClient.DefaultRequestHeaders.Add(bearer.Name, "Bearer " + bearer.Token);
+            httpClient.DefaultRequestHeaders.Add(_bearer.Name, "Bearer " + _bearer.Token);
             
             using HttpResponseMessage response = await httpClient.SendAsync(request);
         }

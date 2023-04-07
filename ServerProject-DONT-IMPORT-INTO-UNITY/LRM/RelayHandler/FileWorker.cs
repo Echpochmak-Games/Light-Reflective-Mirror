@@ -7,22 +7,31 @@ namespace LightReflectiveMirror
 {
     public static class FileWorker
     {
-        private static string loginDirectoryName = "API\\";
+        private static string _loginDirectoryName;
+        private static JsonSerializerOptions _options = new JsonSerializerOptions { WriteIndented = true };
 
-        private static string LocalPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory) + loginDirectoryName;
+        private static string LocalPath => Path.Combine(AppDomain.CurrentDomain.BaseDirectory) + _loginDirectoryName;
 
-        public static void Init()
+        public static void Init(string loginDirectoryName)
         {
+            _loginDirectoryName = loginDirectoryName;
             DirectoryInfo dirInfo = new DirectoryInfo(LocalPath);
+            
             if (!dirInfo.Exists)
                 dirInfo.Create();
+        }
+
+        public static void InitFile<T>(T obj, string fileName)
+        {
+           if (!File.Exists(LocalPath + fileName))
+               WriteInFile(obj, fileName);
         }
 
         public static async void WriteInFile<T>(T obj, string fileName)
         {
             await using (FileStream fs = new FileStream(LocalPath + fileName, FileMode.OpenOrCreate))
             {
-                await JsonSerializer.SerializeAsync<T>(fs, obj);
+                await JsonSerializer.SerializeAsync<T>(fs, obj, _options);
             }
         }
 

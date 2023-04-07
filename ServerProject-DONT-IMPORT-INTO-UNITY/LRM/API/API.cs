@@ -1,7 +1,7 @@
 ﻿
 public class API
 {
-    public string AuthenticationAddress { get; set; }
-    public string Authentication { get; set; }
-    public string Clear { get; set; }
+    public string Domain { get; set; }
+    public string AuthProviderPath { get; set; }
+    public string ClearAccessTokenProviderPath { get; set; }
 }
