@@ -1,4 +1,6 @@
-﻿using System.Net.Http;
+﻿using System;
+using System.Net;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace LightReflectiveMirror
@@ -10,6 +12,8 @@ namespace LightReflectiveMirror
         private const string SETTINGS_FILE_NAME = "settings.json";
         private const string BEARER_FILE_NAME = "bearer.json";
         private const string LOGIN_FILE_NAME = "login.json";
+        
+        private const int MAX_NUMBER_ATTEMPT = 5;
 
         private API _api;
         private Login _login;
@@ -45,7 +49,7 @@ namespace LightReflectiveMirror
             }
         }
         
-        public async Task Clear(int accessToken)
+        public async Task Clear(int accessToken, int attempt = 1)
         {
             _api ??= await FileWorker.ReadFile<API>(SETTINGS_FILE_NAME);
             _bearer ??= await FileWorker.ReadFile<Bearer>(BEARER_FILE_NAME);
@@ -58,6 +62,14 @@ namespace LightReflectiveMirror
             httpClient.DefaultRequestHeaders.Add(_bearer.Name, "Bearer " + _bearer.Token);
             
             using HttpResponseMessage response = await httpClient.SendAsync(request);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                if (attempt == MAX_NUMBER_ATTEMPT)
+                    Program.WriteLogMessage($"{DateTime.Now}; Exception: attempts are over;", ConsoleColor.Red);
+                await Authentication();
+                Clear(accessToken, ++attempt);
+            }
         }
     }
 }
