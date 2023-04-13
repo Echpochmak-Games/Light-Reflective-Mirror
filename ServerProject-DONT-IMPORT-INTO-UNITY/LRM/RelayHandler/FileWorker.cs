@@ -27,7 +27,7 @@ namespace LightReflectiveMirror
                WriteInFile(obj, fileName);
         }
 
-        public static async void WriteInFile<T>(T obj, string fileName)
+        public static async Task WriteInFile<T>(T obj, string fileName)
         {
             await using (FileStream fs = new FileStream(GetPath(fileName), FileMode.OpenOrCreate))
             {
